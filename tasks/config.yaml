@@ -120,11 +120,6 @@
     mode: "0600"
 
 
-- name: Waiting Syncthing Ready
-  ansible.builtin.pause:
-    seconds: 30
-
-
 - name: Start Syncthing service (systemd)
   become: true
   when:
@@ -135,3 +130,13 @@
     state: restarted
     daemon_reload: true
     enabled: true
+
+- name: Waiting Syncthing Ready
+  ansible.builtin.pause:
+    seconds: 30
+
+- name: Restart Syncthing
+  ansible.builtin.systemd:
+    name: syncthing@{{ ansible_user }}
+    state: restarted
+  become: true
