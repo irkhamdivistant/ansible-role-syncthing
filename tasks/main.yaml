@@ -7,14 +7,12 @@
     - install-all
     - install-syncthing
   block:
-    # - name: Gather and set facts for Syncthing installation
-    #   ansible.builtin.include_tasks: fact.yaml
-    # - name: Install Syncthing
-    #   ansible.builtin.include_tasks: install.yaml
-    # - name: Configure Syncthing
-    #   ansible.builtin.include_tasks: config.yaml
-    - name: uninstall Syncthing
-      ansible.builtin.include_tasks: uninstall.yaml
+    - name: Gather and set facts for Syncthing installation
+      ansible.builtin.include_tasks: fact.yaml
+    - name: Install Syncthing
+      ansible.builtin.include_tasks: install.yaml
+    - name: Configure Syncthing
+      ansible.builtin.include_tasks: config.yaml
 
   
 - name: Perform Syncthing uninstallation tasks
