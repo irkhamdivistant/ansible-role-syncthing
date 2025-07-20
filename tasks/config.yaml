@@ -26,6 +26,15 @@
         | ansible.utils.from_xml
       }}
 
+- name: Filter only folders owned by this host
+  ansible.builtin.set_fact:
+    syncthing_folders: >-
+      {{
+        syncthing_folders
+        | selectattr('owner', 'equalto', inventory_hostname)
+        | list
+      }}
+      
 - name: Filter folders untuk host saat ini
   ansible.builtin.set_fact:
     filtered_syncthing_folders: >-
