@@ -1,26 +1,36 @@
 ---
 - name: Uninstall Syncthing binary and archive (Linux)
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
   loop:
     - /usr/local/bin/syncthing
     - ~/syncthing.tar.gz
     - ~/syncthing
+  when: ansible_system == "Linux"
+
+- name: Uninstall Syncthing systemd service unit files (common paths)
   ansible.builtin.file:
     path: "{{ item }}"
     state: absent
-  when: ansible_system == "Linux"
-
-- name: Uninstall Syncthing systemd service (common paths)
   loop:
     - /usr/lib/systemd/system/syncthing@.service
     - /lib/systemd/system/syncthing@.service
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: absent
+  when:
+    - ansible_system == "Linux"
+    - ansible_service_mgr == "systemd"
+
+- name: Disable Syncthing service for specific user
+  ansible.builtin.systemd:
+    name: "syncthing@{{ syncthing_user }}.service"
+    enabled: false
+    daemon_reload: true
   when:
     - ansible_system == "Linux"
     - ansible_service_mgr == "systemd"
 
 - name: Remove user-level Syncthing config directory (~/.local)
+  become: true
   ansible.builtin.file:
     path: "/home/{{ syncthing_user }}/.local"
     state: absent
