@@ -1,10 +1,10 @@
 namespace: irkhamdivistant
-name: Syncthing
+name: syncthing
 version: 1.0.0
 readme: README.md
 authors: ["Irkham Hidayat"]
-description: Syncthing
+description: syncthing
 license: AGPL-3.0-or-later
 repository: https://github.com/irkhamdivistant/ansible-syncthing
-tags: [Syncthing, service, linux]
+tags: [syncthing, service, linux]
 dependencies: {}
