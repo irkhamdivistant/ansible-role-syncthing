@@ -22,15 +22,15 @@
     - ansible_system == "Linux"
     - ansible_service_mgr == "systemd"
 
-- name: Disable Syncthing service for specific user
-  become: true
-  ansible.builtin.systemd:
-    name: "syncthing@{{ syncthing_user }}.service"
-    enabled: false
-    daemon_reload: true
-  when:
-    - ansible_system == "Linux"
-    - ansible_service_mgr == "systemd"
+# - name: Disable Syncthing service for specific user
+#   become: true
+#   ansible.builtin.systemd:
+#     name: "syncthing@{{ syncthing_user }}.service"
+#     enabled: false
+#     daemon_reload: true
+#   when:
+#     - ansible_system == "Linux"
+#     - ansible_service_mgr == "systemd"
 
 - name: Remove user-level Syncthing config directory (~/.local)
   become: true
