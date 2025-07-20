@@ -22,26 +22,16 @@
     syncthing_config_original: >-
       {{ 
         syncthing_config_slurped.content
-        | ansible.builtin.b64decode
+        | b64decode
         | ansible.utils.from_xml
       }}
 
 - name: Filter only folders owned by this host
   ansible.builtin.set_fact:
     syncthing_folders: >-
-      {{
-        syncthing_folders
-        | selectattr('owner', 'equalto', inventory_hostname)
-        | list
-      }}
-      
-- name: Filter folders untuk host saat ini
-  ansible.builtin.set_fact:
-    filtered_syncthing_folders: >-
       {{ syncthing_folders | selectattr('owner', 'equalto', inventory_hostname) | list }}
 
-
-- name: Create new Syncthing device config
+- name: Create device config for this host
   ansible.builtin.set_fact:
     syncthing_config_device: >-
       {{
@@ -51,7 +41,7 @@
         }
       }}
 
-- name: Combine all Syncthing device configs
+- name: Combine all device configs from all hosts
   run_once: true
   ansible.builtin.set_fact:
     syncthing_combined_config_device: >-
@@ -61,11 +51,11 @@
             | map('extract', hostvars)
             | selectattr('syncthing_config_device', 'defined')
             | map(attribute='syncthing_config_device.device')
-            | list 
+            | list
         }
       }}
 
-- name: Transform combined device config for folder device
+- name: Create shared folder device mapping
   run_once: true
   loop: "{{ syncthing_combined_config_device.device }}"
   loop_control:
@@ -94,13 +84,13 @@
         {
           'folder': syncthing_config_folder.folder | default([]) + [
             syncthing_config_original.configuration.defaults.folder
-            | combine({ '@id': item.id, '@path': item.path })
+            | combine({ '@id': item.id, '@path': item.path, '@type': item.type })
             | combine(syncthing_combined_config_folder_device, recursive=True)
           ]
         }
       }}
 
-- name: Forge final Syncthing config
+- name: Merge all into final Syncthing config
   ansible.builtin.set_fact:
     syncthing_config_updated: >-
       {{
@@ -110,7 +100,7 @@
           | combine(syncthing_config_folder)
           | combine({
             'gui': {
-              'address': syncthing_gui_address,
+              'address': syncthing_gui_address | default('127.0.0.1:8384'),
             },
             'options': {
               'crashReportingEnabled': 'false',
@@ -120,7 +110,7 @@
         })
       }}
 
-- name: Write final Syncthing config
+- name: Write final Syncthing config to config.xml
   become: true
   become_user: "{{ syncthing_user }}"
   when: ansible_system == "Linux"
@@ -138,5 +128,4 @@
     name: "syncthing@{{ syncthing_user }}"
     state: restarted
     daemon_reload: true
-    masked: false
     enabled: true
