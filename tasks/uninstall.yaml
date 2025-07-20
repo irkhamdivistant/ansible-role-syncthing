@@ -1,4 +1,12 @@
 ---
+
+- name: Stop any running Syncthing process for the user
+  become: true
+  ansible.builtin.shell: |
+    pkill -u {{ syncthing_user }} syncthing || true
+  when: ansible_system == "Linux"
+
+  
 - name: Uninstall Syncthing binary and archive (Linux)
   become: true
   ansible.builtin.file:
