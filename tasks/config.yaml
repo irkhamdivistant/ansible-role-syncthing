@@ -1,0 +1,133 @@
+---
+- name: Generate Syncthing config
+  become: true
+  become_user: "{{ syncthing_user }}"
+  changed_when: false
+  when: ansible_system == "Linux"
+  ansible.builtin.shell:
+    cmd: >-
+      rm -rf $HOME/.local/state/syncthing &&
+      syncthing generate --no-default-folder --gui-user={{ syncthing_gui_user }} --gui-password={{ syncthing_gui_password }}
+
+- name: Fetch Syncthing config
+  become: true
+  become_user: "{{ syncthing_user }}"
+  register: syncthing_config_slurped
+  when: ansible_system == "Linux"
+  ansible.builtin.slurp:
+    src: $HOME/.local/state/syncthing/config.xml
+
+- name: Decode Syncthing config content
+  ansible.builtin.set_fact:
+    syncthing_config_original: >-
+      {{ 
+        syncthing_config_slurped.content
+        | ansible.builtin.b64decode
+        | ansible.utils.from_xml
+      }}
+
+- name: Filter folders untuk host saat ini
+  ansible.builtin.set_fact:
+    filtered_syncthing_folders: >-
+      {{ syncthing_folders | selectattr('owner', 'equalto', inventory_hostname) | list }}
+
+
+- name: Create new Syncthing device config
+  ansible.builtin.set_fact:
+    syncthing_config_device: >-
+      {{
+        {
+          'device': syncthing_config_original.configuration.device
+            | combine({ 'autoAcceptFolders': 'false' })
+        }
+      }}
+
+- name: Combine all Syncthing device configs
+  run_once: true
+  ansible.builtin.set_fact:
+    syncthing_combined_config_device: >-
+      {{
+        {
+          'device': ansible_play_hosts_all
+            | map('extract', hostvars)
+            | selectattr('syncthing_config_device', 'defined')
+            | map(attribute='syncthing_config_device.device')
+            | list 
+        }
+      }}
+
+- name: Transform combined device config for folder device
+  run_once: true
+  loop: "{{ syncthing_combined_config_device.device }}"
+  loop_control:
+    label: "{{ item['@name'] }}"
+  ansible.builtin.set_fact:
+    syncthing_combined_config_folder_device: >-
+      {{
+        {
+          'device': syncthing_combined_config_folder_device.device | default([]) + [
+            {
+              '@id': item['@id'],
+              '@introducedBy': item['@introducedBy'] | default(''),
+              'encryptionPassword': None 
+            }
+          ]
+        }
+      }}
+
+- name: Create new Syncthing folder config
+  loop: "{{ syncthing_folders }}"
+  loop_control:
+    label: "{{ item.id }}"
+  ansible.builtin.set_fact:
+    syncthing_config_folder: >-
+      {{
+        {
+          'folder': syncthing_config_folder.folder | default([]) + [
+            syncthing_config_original.configuration.defaults.folder
+            | combine({ '@id': item.id, '@path': item.path })
+            | combine(syncthing_combined_config_folder_device, recursive=True)
+          ]
+        }
+      }}
+
+- name: Forge final Syncthing config
+  ansible.builtin.set_fact:
+    syncthing_config_updated: >-
+      {{
+        syncthing_config_original
+        | combine({ 'configuration': syncthing_config_original.configuration
+          | combine(syncthing_combined_config_device)
+          | combine(syncthing_config_folder)
+          | combine({
+            'gui': {
+              'address': syncthing_gui_address,
+            },
+            'options': {
+              'crashReportingEnabled': 'false',
+              'urAccepted': '-1'
+            }
+          }, recursive=True)
+        })
+      }}
+
+- name: Write final Syncthing config
+  become: true
+  become_user: "{{ syncthing_user }}"
+  when: ansible_system == "Linux"
+  ansible.builtin.copy:
+    content: "{{ syncthing_config_updated | ansible.utils.to_xml(indent='spaces', full_document=False) }}"
+    dest: $HOME/.local/state/syncthing/config.xml
+    mode: "0600"
+
+- name: Start Syncthing service (systemd)
+  become: true
+  when:
+    - ansible_system == "Linux"
+    - ansible_service_mgr == "systemd"
+  ansible.builtin.systemd_service:
+    name: "syncthing@{{ syncthing_user }}"
+    state: restarted
+    daemon_reload: true
+    masked: false
+    enabled: true

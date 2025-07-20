@@ -1,0 +1,18 @@
+---
+- name: Uninstall Syncthing binary (Linux)
+  loop:
+    - /usr/local/bin/syncthing
+    - ~/syncthing.tar.gz
+    - ~/syncthing
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  when: ansible_system == "Linux"
+
+- name: Uninstall Syncthing service config (systemd)
+  ansible.builtin.file:
+    path: /usr/lib/systemd/system/syncthing@.service
+    state: absent
+  when:
+    - ansible_system == "Linux"
+    - ansible_service_mgr == "systemd"

@@ -1,0 +1,67 @@
+---
+- name: Install required package (Linux)
+  become: true
+  loop:
+    - wget
+    - tar
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: latest
+  when: ansible_system == "Linux"
+
+- name: Install Syncthing binary (Linux)
+  become: true
+  changed_when: false
+  ansible.builtin.shell:
+    cmd: >-
+      mkdir -p ~/syncthing &&
+      wget https://github.com/syncthing/syncthing/releases/download/v{{ syncthing_version }}/syncthing-linux-{{ syncthing_architecture }}-v{{ syncthing_version }}.tar.gz -O ~/syncthing.tar.gz &&
+      tar -xvzf ~/syncthing.tar.gz -C ~/syncthing --strip-components=1 &&
+      rm -rf /usr/local/bin/syncthing &&
+      mv ~/syncthing/syncthing /usr/local/bin/ &&
+      chmod +x /usr/local/bin/syncthing &&
+      rm -rf ~/syncthing.tar.gz &&
+      rm -rf ~/syncthing
+  when: ansible_system == "Linux"
+
+- name: Install Syncthing binary (Windows)
+  become: true
+  changed_when: false
+  when: ansible_system == "Windows"
+  ansible.windows.win_shell: |
+    $installDir = "$env:LOCALAPPDATA\Programs\Syncthing"
+    $tempDir = Join-Path $env:TEMP "syncthing_install"
+    $zipFile = Join-Path $tempDir "syncthing.zip"
+    $downloadUrl = "https://github.com/syncthing/syncthing/releases/download/v{{ syncthing_version }}/syncthing-windows-{{ syncthing_architecture }}-v{{ syncthing_version }}.zip"
+
+    New-Item -ItemType Directory -Path $installDir -Force | Out-Null
+    New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+
+    try {
+        Invoke-WebRequest -Uri $downloadUrl -OutFile $zipFile -UseBasicParsing
+    } catch {
+        Remove-Item -Path $tempDir -Recurse -Force
+        exit 1
+    }
+
+    Expand-Archive -Path $zipFile -DestinationPath $tempDir -Force
+
+    $sourceExe = Get-ChildItem -Path $tempDir -Filter "syncthing.exe" -Recurse | Select-Object -First 1
+    if ($sourceExe) {
+        Move-Item -Path $sourceExe.FullName -Destination $installPath -Force
+    }
+
+    Remove-Item -Path $tempDir -Recurse -Force
+
+- name: Install Syncthing service config (systemd)
+  become: true
+  when:
+    - ansible_system == "Linux"
+    - ansible_service_mgr == "systemd"
+  ansible.builtin.template:
+    src: "systemd/syncthing@.service.j2"
+    dest: /usr/lib/systemd/system/syncthing@.service
+    mode: "0644"
+  when:
+    - ansible_system == "Linux"
+    - ansible_service_mgr == "systemd"

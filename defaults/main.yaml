@@ -1,0 +1,12 @@
+syncthing_version: "1.30.0"
+
+syncthing_gui_address: "0.0.0.0:8384"
+syncthing_gui_user: "syncthing"
+syncthing_gui_password: "syncthing"
+
+syncthing_user: "{{ ansible_user }}"
+# Make sure to only specify folders that `syncthing_user` has access to.
+# Use format:
+# - id: folder_id # Unique folder identifier that same across all hosts
+#   path: /path/to/folder # Path to the folder on the host, can be different on each host
+syncthing_folders: []

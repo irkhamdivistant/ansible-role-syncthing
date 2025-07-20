@@ -1,0 +1,22 @@
+---
+- name: Print hosts properties
+  ansible.builtin.debug:
+    msg:
+      - "Architecture: {{ ansible_architecture }}"
+      - "System: {{ ansible_system }}"
+      - "Distribution: {{ ansible_distribution }}"
+      - "Distribution version: {{ ansible_distribution_version }}"
+      - "Service manager: {{ ansible_service_mgr }}"
+
+- name: Set Syncthing architecture
+  ansible.builtin.set_fact:
+    syncthing_architecture: "\
+      {% if ansible_architecture == 'x86_64' %}amd64\
+      {% elif ansible_architecture in ['i386', 'i686'] %}386\
+      {% elif ansible_architecture == 'aarch64' %}arm64\
+      {% elif ansible_architecture == 'armv7l' %}arm\
+      {% else %}amd64{% endif %}"
+
+- name: Print Syncthing architecture
+  ansible.builtin.debug:
+    msg: "Syncthing architecture: {{ syncthing_architecture }}"
