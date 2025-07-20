@@ -1,5 +1,5 @@
 ---
-- name: Uninstall Syncthing binary (Linux)
+- name: Uninstall Syncthing binary and archive (Linux)
   loop:
     - /usr/local/bin/syncthing
     - ~/syncthing.tar.gz
@@ -9,10 +9,20 @@
     state: absent
   when: ansible_system == "Linux"
 
-- name: Uninstall Syncthing service config (systemd)
+- name: Uninstall Syncthing systemd service (common paths)
+  loop:
+    - /usr/lib/systemd/system/syncthing@.service
+    - /lib/systemd/system/syncthing@.service
   ansible.builtin.file:
-    path: /usr/lib/systemd/system/syncthing@.service
+    path: "{{ item }}"
     state: absent
   when:
     - ansible_system == "Linux"
     - ansible_service_mgr == "systemd"
+
+- name: Remove user-level Syncthing config directory (~/.local)
+  ansible.builtin.file:
+    path: "/home/{{ syncthing_user }}/.local"
+    state: absent
+    recurse: true
+  when: ansible_system == "Linux"
