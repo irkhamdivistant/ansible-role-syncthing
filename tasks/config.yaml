@@ -26,10 +26,10 @@
         | ansible.utils.from_xml
       }}
 
-- name: Filter only folders owned by this host
-  ansible.builtin.set_fact:
-    syncthing_folders: >-
-      {{ syncthing_folders | selectattr('owner', 'equalto', inventory_hostname) | list }}
+# - name: Filter only folders owned by this host
+#   ansible.builtin.set_fact:
+#     syncthing_folders: >-
+#       {{ syncthing_folders | selectattr('owner', 'equalto', inventory_hostname) | list }}
 
 - name: Create device config for this host
   ansible.builtin.set_fact:
