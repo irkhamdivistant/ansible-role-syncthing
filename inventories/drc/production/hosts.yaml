@@ -11,5 +11,5 @@ all:
           syncthing_enabled: true
           syncthing_folders:
             - id: integraci-sync-java
-              path: /opt/apps/develop/sample-java-service3
+              path: /opt/apps/production/sample-java-service3
               type: receiveonly
