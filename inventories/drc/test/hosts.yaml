@@ -1,15 +1,13 @@
-plugin: ansible.builtin.yaml
-strict: False
-
-groups:
-  vms:
-    hosts:
-      drc:
-        ansible_host: 34.31.135.39
-        ansible_user: drc_user
-        ansible_password: devops123
-        syncthing_enabled: true
-        syncthing_folders:
-          - id: integraci-sync-java
-            path: /opt/apps/test/sample-java-service3
-            type: receiveonly
+all:
+  children:
+    vms:
+      hosts:
+        drc:
+          ansible_host: 34.31.135.39
+          ansible_user: drc_user
+          ansible_password: devops123
+          syncthing_enabled: true
+          syncthing_folders:
+            - id: integraci-sync-java
+              path: /opt/apps/develop/sample-java-service3
+              type: receiveonly
