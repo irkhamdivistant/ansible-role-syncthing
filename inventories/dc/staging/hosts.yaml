@@ -10,6 +10,6 @@ all:
           ansible_become_method: sudo
           syncthing_enabled: true
           syncthing_folders:
-            - id: integraci-sync-java
+            - id: sample-application-sample-java-service3
               path: /opt/apps/staging/sample-java-service3
               type: sendonly
