@@ -10,6 +10,6 @@ all:
           ansible_become_method: sudo
           syncthing_enabled: true
           syncthing_folders:
-            - id: sample-application-sample-java-service3
+            - id: sample-application/sample-java-service3
               path: /opt/apps/develop/sample-java-service3
               type: receiveonly
