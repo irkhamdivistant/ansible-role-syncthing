@@ -1,0 +1,19 @@
+all:
+  children:
+    vms:
+      hosts:
+        dc:
+          ansible_host: localhost
+          ansible_port: 2221
+          ansible_user: administrator
+          ansible_password: DTIBerinovasi2025
+          ansible_runas_user: administrator
+          syncthing_enabled: true
+          syncthing_folders:
+            - id: sample-application/sample-dotnet-service1
+              path: "C:\\inetpub\\wwwroot\\sample-dotnet-service1-develop"
+              type: sendonly
+        
+      vars:
+        ansible_become_method: runas
+        ansible_shell_type: powershell

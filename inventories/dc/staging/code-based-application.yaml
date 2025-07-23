@@ -1,0 +1,15 @@
+all:
+  children:
+    vms:
+      hosts:
+        dc:
+          ansible_host: 34.134.80.85
+          ansible_user: dc_user
+          ansible_password: devops123
+          ansible_become: true
+          ansible_become_method: sudo
+          syncthing_enabled: true
+          syncthing_folders:
+            - id: sample-application/sample-php-service3
+              path: /var/www/staging/sample-php-service3
+              type: sendonly
